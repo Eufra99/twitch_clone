@@ -15,6 +15,10 @@ class CustomButton extends StatelessWidget {
             primary: buttonColor,
             minimumSize: const Size(double.infinity, 40)),
         onPressed: onTap,
-        child: Text(text));
+        child: Text(text,
+        style: const TextStyle(
+          color: Colors.white
+        ),
+        ));
   }
 }
