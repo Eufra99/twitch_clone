@@ -8,7 +8,7 @@ class User {
   User({required this.uid, required this.username, required this.email});
 
   Map<String, dynamic> toMap() {
-    return {'uid': uid, 'udername': username, 'email': email};
+    return {'uid': uid, 'username': username, 'email': email};
   }
 
   factory User.fromMap(Map<String, dynamic> map) {

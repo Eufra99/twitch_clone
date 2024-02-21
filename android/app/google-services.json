@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "328658040232",
+    "project_id": "twitch-clone-22430",
+    "storage_bucket": "twitch-clone-22430.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328658040232:android:94ecb2220e8450e1c0199d",
+        "android_client_info": {
+          "package_name": "com.example.twitch_clone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtHO-6aRTMJV2SNHo9wj8yQuecLk5Y2g0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
