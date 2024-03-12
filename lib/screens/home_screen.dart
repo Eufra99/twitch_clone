@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:twitch_clone/providers/user_provider.dart';
+import 'package:twitch_clone/screens/feed_screen.dart';
+import 'package:twitch_clone/screens/go_live_screen.dart';
+import 'package:twitch_clone/utils/colors.dart';
 
 class HomeScreen extends StatefulWidget {
   static String routeName = "/home";
@@ -12,11 +15,51 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _page = 0;
+  List<Widget>  pages = [
+    const FeedScreen(),
+    const GoLiveScreen()
+  ];
+  onPageChange(int page) {
+    setState(() {
+       _page = page;
+    });
+   
+  }
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
-      body: Center(child: Text(userProvider.user.username)),
+      bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: buttonColor,
+        unselectedItemColor: primaryColor,
+        backgroundColor: backgroundColor,
+        unselectedFontSize: 12,
+        onTap: onPageChange,
+        currentIndex: _page,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.favorite
+            ),
+            label: 'Following'
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.add_rounded,
+             
+            ),
+             label: 'Go Live'
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.copy
+            ),
+            label: 'Browse'
+          ),
+        ],
+      ),
+      body: pages[_page],
     );
   }
 }
