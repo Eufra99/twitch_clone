@@ -30,16 +30,16 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
     String channelId = await FirestoreMethods()
         .startLiveStream(context, _titleController.text, image);
 
-    if (channelId.isNotEmpty) {
+    /*if (channelId.isNotEmpty) {
       showSnackBar(context, 'Livestream has started sucessfully!');
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => BroadcastScreen()));
-    }
+    }*/
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return SafeArea(         
         child: Responsive(
       child: SingleChildScrollView(
         child: Padding(
@@ -51,7 +51,7 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
                 children: [
                   GestureDetector(
                     onTap: () async {
-                      Uint8List? pickedImage = await pickImage();
+                     Uint8List? pickedImage = await pickImage();
                       if (pickedImage != null) {
                         setState(() {
                           image = pickedImage;

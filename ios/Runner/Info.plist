@@ -49,5 +49,7 @@
 	<string>Requires Camera Usage</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photo For Thumbnail</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Access the microphone</string>
 </dict>
 </plist>

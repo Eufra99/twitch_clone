@@ -22,7 +22,9 @@ void main() async {
               apiKey: 'AIzaSyCtHO-6aRTMJV2SNHo9wj8yQuecLk5Y2g0',
               appId: '1:328658040232:android:94ecb2220e8450e1c0199d',
               messagingSenderId: '328658040232',
-              projectId: 'twitch-clone-22430'))
+              projectId: 'twitch-clone-22430',
+              storageBucket: 'twitch-clone-22430.appspot.com',
+              ))
       : await Firebase.initializeApp();
   runApp(MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
