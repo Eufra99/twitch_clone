@@ -30,11 +30,14 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
     String channelId = await FirestoreMethods()
         .startLiveStream(context, _titleController.text, image);
 
-    /*if (channelId.isNotEmpty) {
+    if (channelId.isNotEmpty) {
       showSnackBar(context, 'Livestream has started sucessfully!');
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => BroadcastScreen()));
-    }*/
+          .push(MaterialPageRoute(builder: (context) => BroadcastScreen(
+            isBroadcaster: true,
+            channelId: channelId,
+          )));
+    }
   }
 
   @override

@@ -1,7 +1,12 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:twitch_clone/config/appId.dart';
+import 'package:twitch_clone/providers/user_provider.dart';
+import 'package:twitch_clone/responsive/responsive_layout.dart';
+import 'package:twitch_clone/widgets/custom_button.dart';
 
 class BroadcastScreen extends StatefulWidget {
   final bool isBroadcaster;
@@ -16,18 +21,20 @@ class BroadcastScreen extends StatefulWidget {
 
 class _BroadcastScreenState extends State<BroadcastScreen> {
   late final RtcEngine _engine;
-  List<int> remoteUid = [];
+  List<int> remoteUidList = [];
   bool swithCamera = true;
   bool isMuted = false;
   bool isScreenSharing = false;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _initEngine();
   }
 
   void _initEngine() async {
+    _engine = createAgoraRtcEngine();
+
     await _engine.initialize(RtcEngineContext(
       appId: appId,
     ));
@@ -36,6 +43,7 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
 
     await _engine.enableVideo();
     await _engine.startPreview();
+    
     await _engine
         .setChannelProfile(ChannelProfileType.channelProfileLiveBroadcasting);
     if (widget.isBroadcaster) {
@@ -44,19 +52,208 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
       _engine.setClientRole(role: ClientRoleType.clientRoleAudience);
     }
 
-    //_joinChannel();
+    _joinChannel();
   }
 
   void _addListeners() {
-    _engine.registerEventHandler(
-        RtcEngineEventHandler(onJoinChannelSuccess: (connection, elapsed) {
-      debugPrint(
-          'joinChannelSuccess ${connection.channelId} ${connection.localUid} $elapsed');
-    }));
+    _engine.registerEventHandler(RtcEngineEventHandler(
+      onJoinChannelSuccess: (connection, elapsed) {
+        debugPrint(
+            'joinChannelSuccess ${connection.channelId} ${connection.localUid} $elapsed');
+      },
+      onUserJoined: (connection, remoteUid, elapsed) {
+        debugPrint('userJoined ${connection.localUid}  $elapsed)');
+        setState(() {
+          remoteUidList.add(remoteUid);
+        });
+      },
+      onUserOffline: (connection, remoteUid, reason) {
+        debugPrint('userOffline ${connection.localUid}  $reason');
+        setState(() {
+          remoteUidList.removeWhere((element) => element == remoteUid);
+        });
+      },
+      onLeaveChannel: (connection, stats) {
+        debugPrint('leaveChannel $stats');
+        setState(() {
+          remoteUidList.clear();
+        });
+      },
+    ));
+  }
+
+  void _joinChannel() async {
+    //await getToken();
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await [Permission.microphone, Permission.camera].request();
+    }
+
+    await _engine.joinChannelWithUserAccount(
+        token: tempToken,
+        channelId: 'testing123',
+        userAccount:
+            Provider.of<UserProvider>(context, listen: false).user.uid);
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    final user = Provider.of<UserProvider>(context).user;
+
+    return WillPopScope(
+      onWillPop: () async {
+        return Future.value(true);
+      },
+      child: Scaffold(
+        bottomNavigationBar: widget.isBroadcaster
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                child: CustomButton(onTap: () {}, text: 'End Stream'),
+              )
+            : null,
+        body: Padding(
+          padding: const EdgeInsets.all(8),
+          child: ResponsiveLatout(
+            desktopBody: Row(
+              children: [
+                _renderVideo(user, isScreenSharing),
+                Expanded(
+                    child: Column(
+                  children: [
+                    if ("${user.uid}${user.username}" == widget.channelId)
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () {},
+                            child: const Text('Switch Camera'),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: Text(isMuted ? 'Unmute' : 'Mute'),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: Text('Stop ScreenSharing'),
+                          )
+                        ],
+                      )
+                  ],
+                )),
+                //Chat(channelId: widget.channelId),
+              ],
+            ),
+            mobileBody: Column(
+              children: [
+                _renderVideo(user, isScreenSharing),
+                if ("${user.uid}${user.username}" == widget.channelId)
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      InkWell(
+                        onTap: () {},
+                        child: const Text('Switch Camera'),
+                      ),
+                      InkWell(
+                        onTap: () {},
+                        child: Text(isMuted ? 'Unmute' : 'Mute'),
+                      ),
+                    ],
+                  ),
+                //chat
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  _renderVideo(user, isScreenSharing) {
+    return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: "${user.uid}${user.username}" == widget.channelId
+            ? isScreenSharing
+                ? kIsWeb
+                    ? AgoraVideoView(
+                        controller: VideoViewController(
+                            rtcEngine: _engine,
+                            canvas: const VideoCanvas(uid: 0),
+                            useFlutterTexture: false,
+                            useAndroidSurfaceView: false),
+                        onAgoraVideoViewCreated: (viewId) {
+                          _engine.startPreview();
+                        },
+                      )
+                    : AgoraVideoView(
+                        controller: VideoViewController(
+                            rtcEngine: _engine,
+                            canvas: const VideoCanvas(uid: 0),
+                            useFlutterTexture: true,
+                            useAndroidSurfaceView: false),
+                        onAgoraVideoViewCreated: (viewId) {
+                          _engine.startPreview();
+                        },
+                      )
+                : AgoraVideoView(
+                    controller: VideoViewController(
+                        rtcEngine: _engine,
+                        canvas: const VideoCanvas(uid: 0),
+                        useFlutterTexture: true,
+                        useAndroidSurfaceView: true),
+                    onAgoraVideoViewCreated: (viewId) {
+                      _engine.startPreview();
+                    },
+                  )
+            : isScreenSharing
+                ? kIsWeb
+                    ? AgoraVideoView(
+                        controller: VideoViewController(
+                            rtcEngine: _engine,
+                            canvas: const VideoCanvas(uid: 0),
+                            useFlutterTexture: false,
+                            useAndroidSurfaceView: false),
+                        onAgoraVideoViewCreated: (viewId) {
+                          _engine.startPreview();
+                        },
+                      )
+                    : AgoraVideoView(
+                        controller: VideoViewController(
+                            rtcEngine: _engine,
+                            canvas: const VideoCanvas(uid: 0),
+                            useFlutterTexture: true,
+                            useAndroidSurfaceView: false),
+                        onAgoraVideoViewCreated: (viewId) {
+                          _engine.startPreview();
+                        },
+                      )
+                : remoteUidList.isNotEmpty
+                    ? kIsWeb
+                        ? AgoraVideoView(
+                            controller: VideoViewController.remote(
+                                rtcEngine: _engine,
+                                canvas: VideoCanvas(uid: remoteUidList[0]),
+                                connection:
+                                    RtcConnection(channelId: widget.channelId),
+                                useFlutterTexture: false,
+                                useAndroidSurfaceView: false),
+                            onAgoraVideoViewCreated: (viewId) {
+                              _engine.startPreview();
+                            },
+                          )
+                        : AgoraVideoView(
+                            controller: VideoViewController.remote(
+                                rtcEngine: _engine,
+                                canvas: VideoCanvas(uid: remoteUidList[0]),
+                                connection:
+                                    RtcConnection(channelId: widget.channelId),
+                                useFlutterTexture: true,
+                                useAndroidSurfaceView: false),
+                            onAgoraVideoViewCreated: (viewId) {
+                              _engine.startPreview();
+                            },
+                          )
+                    : Container());
   }
 }
