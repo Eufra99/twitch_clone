@@ -13,8 +13,12 @@ void showSnackBar(BuildContext context, String content) {
 }
 
 Future<Uint8List?> pickImage() async {
-  PermissionStatus status = await Permission.storage.request();
-  if (status.isGranted) {
+ 
+ Map<Permission, PermissionStatus> statuses = await [
+    Permission.storage,
+    Permission.photos,
+  ].request();
+  if (statuses.isNotEmpty) {
     FilePickerResult? pickedImage =
         await FilePicker.platform.pickFiles(type: FileType.image);
     if (pickedImage != null) {

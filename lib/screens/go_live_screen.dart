@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:twitch_clone/resources/firestore_methods..dart';
 import 'package:twitch_clone/responsive/responsive.dart';
 import 'package:twitch_clone/screens/broadcast_screen.dart';
@@ -27,6 +30,13 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
   }
 
   goLiveStream() async {
+    if(Platform.isAndroid){
+       Map<Permission, PermissionStatus> statuses = await [
+        Permission.microphone,
+        Permission.camera,
+      ].request();
+    }
+    
     String channelId = await FirestoreMethods()
         .startLiveStream(context, _titleController.text, image);
 

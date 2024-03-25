@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +24,7 @@ class BroadcastScreen extends StatefulWidget {
 }
 
 class _BroadcastScreenState extends State<BroadcastScreen> {
-  late final RtcEngine _engine;
+  RtcEngine? _engine;
   List<int> remoteUidList = [];
   bool swithCamera = true;
   bool isMuted = false;
@@ -34,49 +36,53 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
     _initEngine();
   }
 
+  
   void _initEngine() async {
+    //await [Permission.microphone, Permission.camera].request();
+   
     _engine = createAgoraRtcEngine();
-
-    await _engine.initialize(RtcEngineContext(
+    await _engine!.initialize(RtcEngineContext(
       appId: appId,
     ));
 
     _addListeners();
+    await _engine!.enableVideo();
+    await _engine!.startPreview();
 
-    await _engine.enableVideo();
-    await _engine.startPreview();
-
-    await _engine
+    await _engine!
         .setChannelProfile(ChannelProfileType.channelProfileLiveBroadcasting);
     if (widget.isBroadcaster) {
-      _engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+      _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
     } else {
-      _engine.setClientRole(role: ClientRoleType.clientRoleAudience);
+      _engine!.setClientRole(role: ClientRoleType.clientRoleAudience);
     }
 
     _joinChannel();
   }
 
   void _addListeners() {
-    _engine.registerEventHandler(RtcEngineEventHandler(
+    _engine!.registerEventHandler(RtcEngineEventHandler(
+      onError: (err, msg) {
+        debugPrint('[onError] err: $err, msg: $msg');
+      },
       onJoinChannelSuccess: (connection, elapsed) {
-        debugPrint(
-            'joinChannelSuccess ${connection.channelId} ${connection.localUid} $elapsed');
+        debugPrint('joinChannelSuccess ${connection.toJson()} $elapsed');
       },
       onUserJoined: (connection, remoteUid, elapsed) {
-        debugPrint('userJoined ${connection.localUid}  $elapsed)');
+        debugPrint('userJoined ${connection.toJson()}  $elapsed)');
         setState(() {
           remoteUidList.add(remoteUid);
         });
       },
       onUserOffline: (connection, remoteUid, reason) {
-        debugPrint('userOffline ${connection.localUid}  $reason');
+        debugPrint('userOffline ${connection.toJson()}  $reason');
         setState(() {
           remoteUidList.removeWhere((element) => element == remoteUid);
         });
       },
       onLeaveChannel: (connection, stats) {
-        debugPrint('leaveChannel $stats');
+        debugPrint(
+            'connection: ${connection.toJson()} leaveChannel ${stats.toJson()}');
         setState(() {
           remoteUidList.clear();
         });
@@ -86,19 +92,16 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
 
   void _joinChannel() async {
     //await getToken();
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      await [Permission.microphone, Permission.camera].request();
-    }
 
-    await _engine.joinChannelWithUserAccount(
+    await _engine!.joinChannelWithUserAccount(
         token: tempToken,
-        channelId: widget.channelId,
+        channelId: 'test123',
         userAccount:
             Provider.of<UserProvider>(context, listen: false).user.uid);
   }
 
   _leaveChannel() async {
-    await _engine.leaveChannel();
+    await _engine!.leaveChannel();
     if ('${Provider.of<UserProvider>(context, listen: false).user.uid}${Provider.of<UserProvider>(context, listen: false).user.username}' ==
         widget.channelId) {
       await FirestoreMethods().endLiveStream(widget.channelId);
@@ -193,81 +196,76 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
                 ? kIsWeb
                     ? AgoraVideoView(
                         controller: VideoViewController(
-                            rtcEngine: _engine,
-                            canvas: const VideoCanvas(uid: 0),
-                            useFlutterTexture: false,
-                            useAndroidSurfaceView: false),
+                          rtcEngine: _engine!,
+                          canvas: const VideoCanvas(uid: 0),
+                          useFlutterTexture: false,
+                          useAndroidSurfaceView: false,
+                        ),
                         onAgoraVideoViewCreated: (viewId) {
-                          _engine.startPreview();
+                          _engine!.startPreview();
                         },
                       )
                     : AgoraVideoView(
                         controller: VideoViewController(
-                            rtcEngine: _engine,
+                            rtcEngine: _engine!,
                             canvas: const VideoCanvas(uid: 0),
-                            useFlutterTexture: true,
+                            useFlutterTexture: false,
                             useAndroidSurfaceView: false),
                         onAgoraVideoViewCreated: (viewId) {
-                          _engine.startPreview();
+                          _engine!.startPreview();
                         },
                       )
                 : AgoraVideoView(
                     controller: VideoViewController(
-                        rtcEngine: _engine,
+                        rtcEngine: _engine!,
                         canvas: const VideoCanvas(uid: 0),
-                        useFlutterTexture: true,
-                        useAndroidSurfaceView: true),
+                        useFlutterTexture: false,
+                        useAndroidSurfaceView: false),
                     onAgoraVideoViewCreated: (viewId) {
-                      _engine.startPreview();
+                      _engine!.startPreview();
                     },
                   )
             : isScreenSharing
                 ? kIsWeb
                     ? AgoraVideoView(
                         controller: VideoViewController(
-                            rtcEngine: _engine,
+                            rtcEngine: _engine!,
                             canvas: const VideoCanvas(uid: 0),
                             useFlutterTexture: false,
                             useAndroidSurfaceView: false),
                         onAgoraVideoViewCreated: (viewId) {
-                          _engine.startPreview();
+                          _engine!.startPreview();
                         },
                       )
                     : AgoraVideoView(
                         controller: VideoViewController(
-                            rtcEngine: _engine,
+                            rtcEngine: _engine!,
                             canvas: const VideoCanvas(uid: 0),
-                            useFlutterTexture: true,
+                            useFlutterTexture: false,
                             useAndroidSurfaceView: false),
                         onAgoraVideoViewCreated: (viewId) {
-                          _engine.startPreview();
+                          _engine!.startPreview();
                         },
                       )
                 : remoteUidList.isNotEmpty
                     ? kIsWeb
                         ? AgoraVideoView(
                             controller: VideoViewController.remote(
-                                rtcEngine: _engine,
+                                rtcEngine: _engine!,
                                 canvas: VideoCanvas(uid: remoteUidList[0]),
                                 connection:
                                     RtcConnection(channelId: widget.channelId),
                                 useFlutterTexture: false,
                                 useAndroidSurfaceView: false),
-                            onAgoraVideoViewCreated: (viewId) {
-                              _engine.startPreview();
-                            },
                           )
                         : AgoraVideoView(
                             controller: VideoViewController.remote(
-                                rtcEngine: _engine,
+                                rtcEngine: _engine!,
                                 canvas: VideoCanvas(uid: remoteUidList[0]),
                                 connection:
                                     RtcConnection(channelId: widget.channelId),
-                                useFlutterTexture: true,
+                                useFlutterTexture: false,
                                 useAndroidSurfaceView: false),
-                            onAgoraVideoViewCreated: (viewId) {
-                              _engine.startPreview();
-                            },
                           )
                     : Container());
   }
