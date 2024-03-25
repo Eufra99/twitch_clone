@@ -5,7 +5,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:twitch_clone/config/appId.dart';
 import 'package:twitch_clone/providers/user_provider.dart';
+import 'package:twitch_clone/resources/firestore_methods..dart';
 import 'package:twitch_clone/responsive/responsive_layout.dart';
+import 'package:twitch_clone/screens/home_screen.dart';
 import 'package:twitch_clone/widgets/custom_button.dart';
 
 class BroadcastScreen extends StatefulWidget {
@@ -43,7 +45,7 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
 
     await _engine.enableVideo();
     await _engine.startPreview();
-    
+
     await _engine
         .setChannelProfile(ChannelProfileType.channelProfileLiveBroadcasting);
     if (widget.isBroadcaster) {
@@ -90,9 +92,20 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
 
     await _engine.joinChannelWithUserAccount(
         token: tempToken,
-        channelId: 'testing123',
+        channelId: widget.channelId,
         userAccount:
             Provider.of<UserProvider>(context, listen: false).user.uid);
+  }
+
+  _leaveChannel() async {
+    await _engine.leaveChannel();
+    if ('${Provider.of<UserProvider>(context, listen: false).user.uid}${Provider.of<UserProvider>(context, listen: false).user.username}' ==
+        widget.channelId) {
+      await FirestoreMethods().endLiveStream(widget.channelId);
+    } else {
+      await FirestoreMethods().uptadeViewCount(widget.channelId, false);
+    }
+    Navigator.pushReplacementNamed(context, HomeScreen.routeName);
   }
 
   @override
@@ -101,6 +114,8 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
 
     return WillPopScope(
       onWillPop: () async {
+        print("SSSSSSSS");
+        await _leaveChannel();
         return Future.value(true);
       },
       child: Scaffold(
