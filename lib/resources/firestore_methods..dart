@@ -39,7 +39,7 @@ class FirestoreMethods {
           );
 
           _firestore
-              .collection('liveStream')
+              .collection('livestream')
               .doc(channelId)
               .set(liveStream.toMap());
         } else {
@@ -53,6 +53,11 @@ class FirestoreMethods {
       showSnackBar(context, e.message!);
     }
     return channelId;
+  }
+
+  Future<void> chat(String text, String id, BuildContext context) async {
+    final user = Provider.of<UserProvider>(context, listen: false);
+
   }
 
   Future<void> uptadeViewCount(String id, bool isIncrease) async {

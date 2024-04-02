@@ -36,10 +36,9 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
     _initEngine();
   }
 
-  
   void _initEngine() async {
     //await [Permission.microphone, Permission.camera].request();
-   
+
     _engine = createAgoraRtcEngine();
     await _engine!.initialize(RtcEngineContext(
       appId: appId,
@@ -100,6 +99,23 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
             Provider.of<UserProvider>(context, listen: false).user.uid);
   }
 
+  void onToggleMute() async {
+    setState(() {
+      isMuted = !isMuted;
+    });
+    await _engine!.muteLocalAudioStream(isMuted);
+  }
+
+  void _switchCamera() {
+    _engine!.switchCamera().then((value) {
+      setState(() {
+        swithCamera = !swithCamera;
+      });
+    }).catchError((err) {
+      debugPrint('switchCamera $err');
+    });
+  }
+
   _leaveChannel() async {
     await _engine!.leaveChannel();
     if ('${Provider.of<UserProvider>(context, listen: false).user.uid}${Provider.of<UserProvider>(context, listen: false).user.username}' ==
@@ -117,9 +133,8 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
 
     return WillPopScope(
       onWillPop: () async {
-        print("SSSSSSSS");
         await _leaveChannel();
-        return Future.value(true);
+        return Future.value(false);
       },
       child: Scaffold(
         bottomNavigationBar: widget.isBroadcaster
@@ -143,11 +158,11 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           InkWell(
-                            onTap: () {},
+                            onTap: _switchCamera,
                             child: const Text('Switch Camera'),
                           ),
                           InkWell(
-                            onTap: () {},
+                            onTap: onToggleMute,
                             child: Text(isMuted ? 'Unmute' : 'Mute'),
                           ),
                           InkWell(
