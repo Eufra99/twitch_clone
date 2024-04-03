@@ -10,6 +10,7 @@ import 'package:twitch_clone/providers/user_provider.dart';
 import 'package:twitch_clone/resources/firestore_methods..dart';
 import 'package:twitch_clone/responsive/responsive_layout.dart';
 import 'package:twitch_clone/screens/home_screen.dart';
+import 'package:twitch_clone/widgets/chat.dart';
 import 'package:twitch_clone/widgets/custom_button.dart';
 
 class BroadcastScreen extends StatefulWidget {
@@ -173,7 +174,7 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
                       )
                   ],
                 )),
-                //Chat(channelId: widget.channelId),
+                Chat(channelId: widget.channelId),
               ],
             ),
             mobileBody: Column(
@@ -185,11 +186,11 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       InkWell(
-                        onTap: () {},
+                        onTap: _switchCamera,
                         child: const Text('Switch Camera'),
                       ),
                       InkWell(
-                        onTap: () {},
+                        onTap: onToggleMute,
                         child: Text(isMuted ? 'Unmute' : 'Mute'),
                       ),
                     ],
